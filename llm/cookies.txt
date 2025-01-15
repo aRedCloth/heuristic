@@ -1,0 +1,35 @@
+[
+    {
+        "domain": ".poe.com",
+        "expirationDate": 1704701078.12673,
+        "httpOnly": true,
+        "name": "__cf_bm",
+        "path": "/",
+        "secure": true,
+        "session": false,
+        "value": "Vjbt3.NMZFMe1Q8Oze1mMrk.E8YVkM9Ix2bRS.36H4g-1704699277-1-AbtIZ5/9rXu1Ik0SakfqQNSPskp8vp8VIwTHYBXNFL8SbJhU2Y4VG6MdIUIS+8JanNnV5fXkgyw8K0DSiL2uRSY=",
+        "id": 1
+    },
+    {
+        "domain": ".poe.com",
+        "expirationDate": 1736235280.959931,
+        "httpOnly": true,
+        "name": "cf_clearance",
+        "path": "/",
+        "secure": true,
+        "session": false,
+        "value": "TCCqvLJ51cWiSmKuds2LskjJurtSsD95z2isOnG_8UY-1704699280-0-2-1f173e3a.fc2a088d.481661da-0.2.1704699280",
+        "id": 2
+    },
+    {
+        "domain": "poe.com",
+        "expirationDate": 1739259409.81183,
+        "httpOnly": true,
+        "name": "p-b",
+        "path": "/",
+        "secure": true,
+        "session": false,
+        "value": "U9DVxtLVQ5Ym5Qriel9wuw%3D%3D",
+        "id": 3
+    }
+]
