@@ -1,21 +1,20 @@
-from server.LabelFunction.LF_by_form import spanize_and_label_text_by_text,basic_text_sentiment_classification_for_sentence,spanize_and_label_text_by_sentence
+from server.LabelFunction.LF_by_form import spanize_and_label_text_by_text,basic_text_sentiment_classification_for_sentence
 from server.textprocess.textProcessor import get_all_token_sets
 
-from server.LabelFunction.LF_helper import match_label_for_form_with_rules,get_label_for_form
+from server.LabelFunction.LF_helper import match_label_for_form_with_rules,get_label_for_form,sentiment_labels,rules
 from server.utils.helper import label_string2int
 import re
 import server.utils.config as config
 #辅助函数，将原文转化为标签列表形式
 def text_to_form_list(text,alltokensets,aspect):
     spanized_text_dict=spanize_and_label_text_by_text(text,alltokensets)
-    
     #提取出标签组成的句型列表，没有标签的span用none代替
     form_list=[]
     for i, item in enumerate(spanized_text_dict["span_list"]):
-        if item["label"]!="":
+        if item["span"]==aspect:
+            form_list.append("aspect")
+        elif item["label"]!="":
             form_list.append(item["label"])
-        elif item["span"]==aspect:
-            form_list.append("aspect") 
         else:
             continue
             #form_list.append("none")
@@ -51,7 +50,6 @@ def label_with_token_match_method(text,aspect,direction,alltokensets,sentiment_l
     handled_text=extract_directional_text(text, aspect, direction)
     spanized_text_dict=spanize_and_label_text_by_text(handled_text,alltokensets)
 
-
     # 找到 aspect 的下标
     aspect_index = next((i for i, item in enumerate(spanized_text_dict["span_list"]) if item['span'] == aspect), None)
     #提取出标签组成的句型列表，没有标签的span用none代替 
@@ -63,7 +61,7 @@ def label_with_token_match_method(text,aspect,direction,alltokensets,sentiment_l
     
     #将匹配规则应用在当前句子中
     matched_form=match_label_for_form_with_rules(form_list,rules)
-    #print (matched_form)
+    #print ("matched list:",matched_form)
 
     #找到aspect的坐标
     aspect_idx= matched_form.index("aspect")
@@ -108,8 +106,6 @@ def extract_context(text, aspect, window_size):
 #首先定位到aspect,在aspect前后window_range大小的范围进行文本情感分析，用这个范围内的情感作为该aspect的情感
 def label_with_window_analysis_method(text,aspect,alltokensets,window_size,sentiment_labels,rules):
     window_text=extract_context(text, aspect, window_size)
-    spanized_text_dict=spanize_and_label_text_by_text(window_text,alltokensets)
-    
     #提取出标签组成的句型列表，没有标签的span用none代替
     form_list=text_to_form_list(window_text,alltokensets,aspect)
     
@@ -123,8 +119,6 @@ def label_with_window_analysis_method(text,aspect,alltokensets,window_size,senti
 
 #使用全文的情感来推测文中aspect的情感，适用于只含有一种aspect的短文（推特评论）
 def label_with_sc_method(text,aspect,alltokensets,sentiment_labels,rules):
-    spanized_text_dict=spanize_and_label_text_by_text(text,alltokensets)
-    
     #提取出标签组成的句型列表，没有标签的span用none代替
     form_list=text_to_form_list(text,alltokensets,aspect)
 
@@ -134,15 +128,15 @@ def label_with_sc_method(text,aspect,alltokensets,sentiment_labels,rules):
     return label_string2int(final_label)
 
 if __name__=='__main__':
-    aspect="food"
+    aspect='Trump'
     alltokensets=get_all_token_sets()
-    text="i am handsome, but you are ugly."
-    print(text_to_form_list(text,alltokensets,aspect))
-    #window_size=5
+    text="“The reasons for my departure are personal, but it has been my great honor to serve President Trump and this administration,” Dubke, 47, wrote in an email to friends, according to Politico."
+    #print(text_to_form_list(text,alltokensets,aspect))
+    window_size=5
     #text2="The atmosphere is unheralded, the service impecible, and the food magnificant."
-    #print(label_with_token_match_method(text2,aspect,"near",alltokensets,sentiment_labels))
+    print(label_with_token_match_method(text,aspect,"near",alltokensets,sentiment_labels,rules))
 
-    #print(label_with_window_analysis_method(text,aspect,alltokensets,window_size,sentiment_labels,rules))
+    print(label_with_window_analysis_method(text,aspect,alltokensets,window_size,sentiment_labels,rules))
 ''' 
 spanize_and_label_text_by_text的返回结果：
 {'span_list': [{'span': 'On the contrary', 'start': 0, 'end': 3, 'label': 'contrast'}...],

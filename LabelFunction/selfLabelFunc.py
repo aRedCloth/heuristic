@@ -13,7 +13,6 @@ from server.utils.helper import  get_correct_path
 import server.utils.config as config
 import string
 from server.LabelFunction.co_reference import coreference_replace,replace_words_with_aspect
-from server.LabelFunction.LF_helper import match_label_for_form_with_rules,get_label_for_form,rules,sentiment_labels
 file_path = '../'+config.train_dataset_path  # 替换为你的CSV文件路径
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # 当前脚本所在目录
@@ -49,7 +48,7 @@ def make_absa_lf(args):
     def preprocess_text(text):
         """根据参数对文本进行预处理"""
         # 转小写（通用步骤）
-        text = text.lower()
+        #text = text.lower()
         # 替换代词
         if len(other_name_list)>1 or (len(other_name_list)==1 and other_name_list[0]!=''): #[{'name': ''}]表示other_name_list为空
             text =replace_words_with_aspect(text, other_name_list, aspect)
@@ -174,8 +173,9 @@ def snorkelPredLabels(df_train, L_train, expert_anno):
 
         # 计算准确率
         accuracy = correct_predictions / len(df_train)
-
-        return accuracy
+        # 截取小数点后三位
+        trunked_accuracy= round(accuracy, 3)
+        return trunked_accuracy
 
     # 预测
     label_model = LabelModel(cardinality=3, verbose=True)
@@ -198,8 +198,9 @@ def snorkelPredLabels(df_train, L_train, expert_anno):
 
     ntrl_rows = expert_anno["neutral"]
     L_train[ntrl_rows] = config.NEUTRAL
-    df_train.to_csv(dataset_path, index=False, encoding='utf-8')
-    print("snorkel标记函数准确率：",calculate_accuracy(df_train))
+    df_train.to_csv(dataset_path, index=False, encoding='utf-8-sig')
+    accuracy=calculate_accuracy(df_train)
+    print("snorkel标记函数准确率：",accuracy)
     
     probs_train = label_model.predict_proba(L=L_train)#proba概率分布
     # 过滤
@@ -208,7 +209,7 @@ def snorkelPredLabels(df_train, L_train, expert_anno):
         X=df_train, y=probs_train, L=L_train
     )
     
-    return df_train_filtered, probs_train_filtered
+    return df_train_filtered, probs_train_filtered,accuracy
     
     #return df_train,probs_train
     '''''' 
@@ -253,7 +254,10 @@ def calculate_accuracy(list1, list2):
     
     # 计算正确率
     accuracy = correct_count / min_len if min_len > 0 else 0.0
-    return accuracy
+
+    # 截取小数点后三位
+    trunked_accuracy= round(accuracy, 3)
+    return trunked_accuracy
 
 #检查对于一个文本，各个标记函数的标记状况
 def check_labeling_results(text,aspect,alltokensets,sentiment_labels,rules):
@@ -268,26 +272,26 @@ def check_labeling_results(text,aspect,alltokensets,sentiment_labels,rules):
     
 
 if __name__=='__main__':
-
+    '''
     rules= {'positive': [['goodfood'], ['negation', 'negative'],['negation', 'badfood']], 
-            'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]}, 
-    sentiment_labels=['positive','negative']
-    aspect='food'
+            'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]}
+    sentiment_labels=['positive','negative','neutral']
+    aspect='Trump'
     alltokensets=get_all_token_sets()
 
     while(1):
         text=input("Enter the text:  ")
-        check_labeling_results(text.lower(),aspect,alltokensets,sentiment_labels,rules)
+        check_labeling_results(text,aspect,alltokensets,sentiment_labels,rules)
+    '''
 
-
-    token_match_config={'func_name': 'token_match', 'aspect': 'food', 'pronoun_replace': 'False', 'other_name': ['seafood','foods'], 
+    token_match_config={'func_name': 'token_match', 'aspect': 'Trump', 'pronoun_replace': 'False', 'other_name': ['president'], 
                         'sentiment_labels': ['positive', 'negative','neutral'], 
                         'rules':  {'positive': [['goodfood'], ['negation', 'negative'],['negation', 'badfood']], 
                                     'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]},
                 'selected_tokensets': ['positive', 'negation', 'negative','goodfood','badfood','contrast','neutral'], 
                         'label_method': 'token-match', 'token_match_config': {'direction': 'near'}, 'structure_match_config': {'clause_complement': ''}, 'window_analysis_config': {'window_size': 1}}     
 
-    svo_config={'func_name': 'svo', 'aspect': 'food', 'pronoun_replace': 'False', 'other_name': ['seafood','foods'], 
+    svo_config={'func_name': 'svo', 'aspect': 'Trump', 'pronoun_replace': 'False', 'other_name': ['president'], 
                 'sentiment_labels': ['positive', 'negative','neutral'], 
                 'rules':  {'positive': [['goodfood'], ['negation', 'negative'],['negation', 'badfood']], 
                             'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]},
@@ -296,7 +300,7 @@ if __name__=='__main__':
                 'structure_match_config': {'clause_complement': ''}, 'window_analysis_config': {'window_size': 1}}  
 
 
-    window_config={'func_name': 'windo5w', 'aspect': 'food', 'pronoun_replace': 'False', 'other_name': ['seafood','foods'], 
+    window_config={'func_name': 'windo5w', 'aspect': 'Trump', 'pronoun_replace': 'False', 'other_name': ['president'], 
                     'sentiment_labels': ['positive', 'negative','neutral'], 
                     'rules':  {'positive': [['goodfood'], ['negation', 'negative'],['negation', 'badfood']], 
                                 'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]},
@@ -304,7 +308,7 @@ if __name__=='__main__':
                     'label_method': 'window-analysis-match', 'token_match_config': {'direction': 'near'}, 'structure_match_config': {'clause_complement': ''}, 'window_analysis_config': {'window_size': '5'}}
 
 
-    sc_config={'func_name': 'sc', 'aspect': 'food', 'pronoun_replace': 'False', 'other_name': ['seafood','foods'], 
+    sc_config={'func_name': 'sc', 'aspect': 'Trump', 'pronoun_replace': 'False', 'other_name': ['president'], 
                 'sentiment_labels': ['positive', 'negative','neutral'], 
                 'rules':  {'positive': [['goodfood'], ['negation', 'negative'],['negation', 'badfood']], 
                             'negative': [ ['negation', 'goodfood'],['negation', 'positive'], ['badfood']]},
@@ -320,19 +324,16 @@ if __name__=='__main__':
     lfs = [svo,token_match, window_match,sc]
 
     # 读取训练集数据
-    file2_path = '../datasets/restaurants-train.csv'
-    current_dir = os.path.dirname(os.path.abspath(__file__))  # 当前脚本所在目录
-    dataset2_path = os.path.join(current_dir, file2_path)  # 拼接成完整路径
-    df_train = pd.read_csv(dataset2_path)
+    df_train = pd.read_csv(dataset_path)
 
 
     # 应用标注函数
     applier = PandasLFApplier(lfs=lfs)
     L_train = applier.apply(df=df_train)
-    print("check my L_train",L_train[190:210])
+    #print("check my L_train",L_train[190:210])
 
     expert={'positive':[],"negative":[],"neutral":[]}
-    df_fil, pred_fil= snorkelPredLabels(df_train, L_train,expert)
+    df_fil, pred_fil,accuracy= snorkelPredLabels(df_train, L_train,expert)
 
 
     # 训练模型
@@ -355,8 +356,8 @@ if __name__=='__main__':
     if not test_label_list:
         print("Test labels not found or invalid")
     else:
-        print("test_pred_labels",pred_labels[:20])
-        print("test true labels",test_label_list[:20])
+        print("test_pred_labels",pred_labels[:10])
+        print("test true labels",test_label_list[:10])
         print("accuracy:", calculate_accuracy(pred_labels, test_label_list))
     # 分析 Labeling Functions
     analysis = LFAnalysis(L=L_train, lfs=lfs).lf_summary()#包含j(第j个函数),  Polarity,conflict,overlap,coverage

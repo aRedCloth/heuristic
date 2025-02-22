@@ -132,33 +132,37 @@ def gain_span_list(text):  #获得 unlabeled_span_list
 
 def custom_sort(item):# 排序函数
     return item['start'], len(item['label'])
-'''
-patterns = {
-    "contrast":[
-                [{"LOWER": "on"}, {"LOWER": "the"}, {"LOWER": "contrary"}],
-                [{"LOWER": "as"}, {"LOWER": "well"}, {"LOWER": "as"}],
-                [{"LOWER": "in"}, {"LOWER": "addition"}]
-    ],
-    "unsure":[
-                [{"LOWER": "not"}, {"LOWER": "sure"}]
-    ]
-}
-span_list
-{'span': 'On the contrary', 'start': 0, 'end': 3, 'label': 'contrast'}
-{'span': ',', 'start': 3, 'end': 4, 'label': ''}
-{'span': 'i', 'start': 4, 'end': 5, 'label': ''}
-{'span': 'am', 'start': 5, 'end': 6, 'label': ''}
-{'span': 'not sure', 'start': 6, 'end': 8, 'label': 'unsure'}
-{'span': 'if', 'start': 8, 'end': 9, 'label': ''}
-{'span': 'John', 'start': 9, 'end': 10, 'label': ''}
-{'span': 'is', 'start': 10, 'end': 11, 'label': ''}
-{'span': 'a', 'start': 11, 'end': 12, 'label': ''}
-{'span': 'good', 'start': 12, 'end': 13, 'label': ''}
-{'span': 'man', 'start': 13, 'end': 14, 'label': ''}
-)
-patterns=load_patterns()
 
-test="On the contrary, i am not sure if John is a good man. What is your idea, Jonny?"
-span_list=gain_span_list(test)
-for token_dict in span_list:
-    print(token_dict)'''
+
+if __name__=='__main__':
+    '''
+    patterns = {
+        "contrast":[
+                    [{"LOWER": "on"}, {"LOWER": "the"}, {"LOWER": "contrary"}],
+                    [{"LOWER": "as"}, {"LOWER": "well"}, {"LOWER": "as"}],
+                    [{"LOWER": "in"}, {"LOWER": "addition"}]
+        ],
+        "unsure":[
+                    [{"LOWER": "not"}, {"LOWER": "sure"}]
+        ]
+    }
+    span_list
+    {'span': 'On the contrary', 'start': 0, 'end': 3, 'label': 'contrast'}
+    {'span': ',', 'start': 3, 'end': 4, 'label': ''}
+    {'span': 'i', 'start': 4, 'end': 5, 'label': ''}
+    {'span': 'am', 'start': 5, 'end': 6, 'label': ''}
+    {'span': 'not sure', 'start': 6, 'end': 8, 'label': 'unsure'}
+    {'span': 'if', 'start': 8, 'end': 9, 'label': ''}
+    {'span': 'John', 'start': 9, 'end': 10, 'label': ''}
+    {'span': 'is', 'start': 10, 'end': 11, 'label': ''}
+    {'span': 'a', 'start': 11, 'end': 12, 'label': ''}
+    {'span': 'good', 'start': 12, 'end': 13, 'label': ''}
+    {'span': 'man', 'start': 13, 'end': 14, 'label': ''}
+    )
+    patterns=load_patterns()
+
+    test="On the contrary, i am not sure if John is a good man. What is your idea, Jonny?"
+    span_list=gain_span_list(test)
+    for token_dict in span_list:
+        print(token_dict)
+    '''

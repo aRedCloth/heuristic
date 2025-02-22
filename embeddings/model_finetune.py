@@ -18,9 +18,7 @@ train_path=get_correct_path("../"+config.train_dataset_path)
 test_path=get_correct_path("../"+config.test_dataset_path)
 
 def modelFineTuning(args):
-    
     '''args 包含lfs_info,一个列表，表中每一项是一个标记函数的配置信息和性能表现
-    
     lfs_info:[ {
                 config:{lf的配置信息},func_name,aspect,pronoun_replace,other_name: [{ key: Date.now(), name: '' }],   label_method,condition，
                                     token_match_config:{window_size:{left:'' ,right:''}},
@@ -28,7 +26,6 @@ def modelFineTuning(args):
 
                 perform:{lf的性能表现}conflicts coverage coverdots&对应label， ishow, label种类（pos和neg）,name,overlaps 
                 } ]
-
     '''
     # 第一步 通过标记函数信息找到对应的标记函数；如果这里面的标记函数不是第三方标记函数而是用户自定义的标记函数，那就需要进行解析用户自定义的标记函数
     
@@ -55,7 +52,7 @@ def modelFineTuning(args):
     df_train, L_train, lfsinfo = computeLFS(lfs=lfs)
     # 第三步 通过L_train 与 snorkel 计算伪标签
     # 第四步 过滤未标记的数据集， 注意：这里同时也要加上专家的标注结果{positive:[], negative:[], ignore:[]}，需要注意的是，ignore是直接忽略节点
-    df_train_filtered, probs_train_filtered = snorkelPredLabels(df_train=df_train, L_train=L_train, expert_anno=expert_anno)
+    df_train_filtered, probs_train_filtered,snorkel_accuracy = snorkelPredLabels(df_train=df_train, L_train=L_train, expert_anno=expert_anno)
     # 第五步 构建训练数据集、测试数据集
     raw_datasets = createDatasetDict(df_train_filtered)
     print(raw_datasets)
@@ -80,7 +77,7 @@ def modelFineTuning(args):
         output_dir = get_correct_path("../models/test-trainer"),
         learning_rate= 1e-05,
         num_train_epochs=5,
-        save_steps= 50)
+        save_steps= 100)
     trainer = Trainer(
         model,
         training_args,
@@ -142,6 +139,7 @@ def modelFineTuning(args):
     
 
     # 第八步 测试集测试当前模型的准确率
+    '''
     text_list, label_list = gain_test_dataset()
     pre_label_list = []
     model.eval()
@@ -160,13 +158,12 @@ def modelFineTuning(args):
             count += 1
     accuracy = count / len(label_list)
     print("准确率", accuracy)
-
+    '''
     model_info = {
         "name": MODEL_NAME,
         "size": "477MB",
-        "accuracy": accuracy,
-        "train_set": len(df_train),
-        "test_set": len(label_list)
+        "accuracy": snorkel_accuracy,
+        "train_set": len(df_train)
     }
     return dr_embedding, aclsamples, aclfsvotesamples, model_info
 

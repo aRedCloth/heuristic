@@ -11,4 +11,7 @@ ABSTAIN=-1
 train_dataset_path='datasets/restaurants-train.csv'
 test_dataset_path='datasets/restaurants-test.csv'
 
-aspect="food"
+#train_dataset_path='datasets/news11k_train.csv'
+#test_dataset_path='datasets/news11k_test.csv'
+
+aspect="Trump"

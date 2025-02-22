@@ -46,7 +46,7 @@ def match_label_for_form_with_rules(label_form, rules):#["negation","positive"]-
     return transformed_labels
 
 #采用match_label_for_form_with_rules将原句型按照规则过滤,统计过滤后情感标签出现的个数，返回一个最终标签
-def get_label_for_form(label_form, rules, sentiment_labels=["positive", "negative","neutral"]):
+def get_label_for_form(label_form, rules, sentiment_labels=["positive","negative","neutral"]):
     matched_form=match_label_for_form_with_rules(label_form,rules)
     # 初始化计数器
     label_count = Counter()

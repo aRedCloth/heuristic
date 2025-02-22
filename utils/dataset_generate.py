@@ -2,14 +2,16 @@ import json
 import pandas as pd
 import os
 import re
+import requests
 from server.LabelFunction.LF_by_svo_extract import extract_svo,label_with_svo_method,filtered_svo_with_aspect
 from server.LabelFunction.LF_by_token import label_with_token_match_method,label_with_sc_method
-from server.utils.helper import train_dataset_path, test_dataset_path,Json2Dict,Dict2Json
-
+from nltk.tokenize import sent_tokenize
+import server.utils.config as config
 import server.LabelFunction.selfLabelFunc
+
 posnews_path="../datasets/positive_news"
 negnews_path="../datasets/negative_news"
-
+#旧新闻提取：从积极消极各自1000个json文件中提取出与aspect有关的句子————————————————
 def csv2list():
     # 读取CSV文件
     file_path = '../datasets/restaurants-train.csv'  # 替换为你的CSV文件路径
@@ -28,7 +30,7 @@ def csv2list():
 
 
 def extract_text_and_polarity():
-    file_path = '../'+test_dataset_path  # 替换为你的CSV文件路径
+    file_path = '../'+config.test_dataset_path  # 替换为你的CSV文件路径
     current_dir = os.path.dirname(os.path.abspath(__file__))  # 当前脚本所在目录
     full_path = os.path.join(current_dir, file_path)  # 拼接成完整路径
     data = pd.read_csv(full_path)
@@ -48,8 +50,8 @@ def extract_text_and_polarity():
 #从文本中提取与aspect相关的句子
 def find_sentences_with_aspect(text, aspect):
     # 使用正则表达式分割文本为句子（以句号、问号或感叹号作为分隔符）
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-
+    #sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = sent_tokenize(text)
     aspect = aspect.lower()
     matching_sentences = [
         sentence for sentence in sentences
@@ -87,15 +89,7 @@ def get_aspect_texts_from_json(file_path, aspect="Trump", label="Positive"):
     return extracted_data
 
 def find_sentences_with_string(text, target_string, case_insensitive=True):
-    """
-    从文本中找出所有包含指定字符串的句子。
-
-    :param text: 输入文本。
-    :param target_string: 要查找的字符串。
-    :param case_insensitive: 是否忽略大小写，默认忽略。
-    :return: 包含目标字符串的句子列表。
-    """
-    sentences = re.split(r'(?<=[.!?])\s+', text)  # 按句子分割
+    sentences = sent_tokenize(text)  # 按句子分割
     if case_insensitive:
         target_string = target_string.lower()
         matching_sentences = [
@@ -132,9 +126,11 @@ def get_aspect_sentences_from_json(file_path, aspect="Trump", label="Positive"):
                     matching_sentences = find_sentences_with_string(text, aspect)
                     for sentence in matching_sentences:
                         extracted_data.append({
-                            'FileName': file,
-                            'Text': sentence.strip(),
-                            'Label': label
+                            'id': file,
+                            'text': sentence,
+                            'term':aspect,
+                            'polarity': label.lower(),
+                            'label':'neutral'
                         })
 
     print(f"从文件夹 '{file_path}' 中找到 {len(extracted_data)} 条与 '{aspect}' 相关的句子。")
@@ -152,8 +148,10 @@ def construct_data_sets(aspect):
     #pos_texts = get_aspect_texts_from_json(posnews_path, aspect, label="Positive")
     pos_texts = get_aspect_sentences_from_json(posnews_path, aspect, label="Positive")
     neg_texts = get_aspect_sentences_from_json(negnews_path, aspect, label="Negative")
-    all_texts = pos_texts + neg_texts
+    all_texts = pos_texts[:150] + neg_texts[:150]
 
+    for index, data in enumerate(all_texts):
+        data['id'] = index
     # 创建 DataFrame 并保存到 CSV
     df = pd.DataFrame(all_texts)
     df.to_csv(dataset_path, index=False, encoding='utf-8-sig')
@@ -161,5 +159,62 @@ def construct_data_sets(aspect):
 
 
 
+#新·新闻提取：从jsonl文件中提取出与aspect有关的句子————————————————
+#从url中下载json文件
+def  url_download():
+    url = "https://raw.githubusercontent.com/fhamborg/NewsMTSC/6b838e00f54423c253806327a0ae24dbffa24c9e/NewsSentiment/experiments/default/datasets/newsmtsc-rw-hf/test.jsonl"
+    file_path = "test.jsonl"  # 保存的文件名
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        with open(file_path, "wb") as file:
+            file.write(response.content)
+        print(f"文件下载成功: {file_path}")
+    else:
+        print(f"下载失败，状态码: {response.status_code}")
+
+#jsonl文件转csv
+def jsonl2csv(aspect,train_or_test):
+    current_dir = os.path.dirname(os.path.abspath(__file__))  # 当前脚本所在目录
+    # 读取 JSONL 文件
+    if train_or_test=="train":
+        input_file = os.path.join(current_dir, '../datasets/11k_news_sentence/train.jsonl')  # 你的 JSONL 文件路径
+        output_file = os.path.join(current_dir, '../datasets/11k_news_sentence/news11k_train.csv')  # 输出的 CSV 文件路径
+    else:
+        input_file = os.path.join(current_dir, '../datasets/11k_news_sentence/test.jsonl')  # 你的 JSONL 文件路径
+        output_file = os.path.join(current_dir, '../datasets/11k_news_sentence/news11k_test.csv')  # 输出的 CSV 文件路径
+
+    # 存储提取的数据
+    extracted_data = []
+
+    # 解析 JSONL 文件
+    with open(input_file, "r", encoding="utf-8") as f:
+        for line in f:
+            news_dict = json.loads(line.strip())  # 解析 JSON
+            mention = news_dict.get("mention", "")
+
+            # 只保留 mention 为 "Trump" 的数据
+            if mention.lower() == aspect.lower():
+                extracted_data.append({
+                    "id": news_dict.get("id", ""),  # ID
+                    "text": news_dict.get("sentence", ""),  # 改名
+                    "aspect": mention,  # 改名
+                    "polarity": ('positive' if news_dict.get("polarity", "")==1 else ('negative' if news_dict.get("polarity", "")==0 else 'neutral')),  # 情感
+                    "label":"neutral"
+                })
+
+    # 转换为 DataFrame
+    if train_or_test=="train":
+        df = pd.DataFrame(extracted_data[:450])
+    else:
+        df = pd.DataFrame(extracted_data[:150])
+
+    # 保存为 CSV 文件
+    df.to_csv(output_file, index=False, encoding="utf-8")
+
+    print(f"提取完成，符合条件的数据已保存到: {output_file}")
+
 if __name__=="__main__":
-    construct_data_sets("Trump")
+    #construct_data_sets("Trump")
+    jsonl2csv("Trump","test")
